@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="pl" xmlns:th="http://www.thymeleaf.org">
+<!-- fajny plugin wzięty stąd: https://github.com/thymeleaf -->
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sprawdź Kurs Waluty - NBP</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #343E3D;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            max-width: 500px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+            font-size: 14px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e1e8ed;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #343E3D;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background: #343E3D;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+        }
+
+        .btn:active {
+            transform: translateY(-1px);
+        }
+
+        .result {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 25px;
+            border-radius: 15px;
+            margin-top: 25px;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .currency-examples {
+            background: #22181C;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            font-size: 14px;
+        }
+
+        .currency-examples h3 {
+            margin-bottom: 15px;
+            color: #ffff;
+            font-size: 16px;
+        }
+
+        .currency-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 10px;
+        }
+
+        .currency-list span {
+            background: rgba(255, 255, 255, 0.7);
+            padding: 8px 10px;
+            border-radius: 8px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .currency-list span:hover {
+            background: rgba(255, 255, 255, 1);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            cursor: pointer;
+        }
+
+        .rate-display {
+            font-size: 28px;
+            font-weight: bold;
+            color: #343E3D;
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(40, 167, 69, 0.1);
+            border-radius: 10px;
+            border: 2px solid #343E3D;
+        }
+
+        .result-info {
+            background: rgba(255, 255, 255, 0.8);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+
+        .result-info p {
+            margin: 8px 0;
+            font-size: 14px;
+        }
+
+        .date-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-radius: 50%;
+        }
+
+
+        @media (max-width: 480px) {
+            .date-inputs {
+                grid-template-columns: 1fr;
+            }
+
+            .container {
+                padding: 25px;
+                margin: 10px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            .currency-list {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Sprawdź Kurs Waluty NBP</h1>
+
+    <div th:if="${error}" class="error">
+        <span th:text="${error}"></span>
+    </div>
+
+    <div class="currency-examples">
+        <h3>Popularne waluty:</h3>
+        <div class="currency-list">
+            <span onclick="setCurrency('USD')"><strong>USD</strong> - Dolar</span>
+            <span onclick="setCurrency('EUR')"><strong>EUR</strong> - Euro</span>
+            <span onclick="setCurrency('GBP')"><strong>GBP</strong> - Funt</span>
+            <span onclick="setCurrency('CHF')"><strong>CHF</strong> - Frank</span>
+            <span onclick="setCurrency('JPY')"><strong>JPY</strong> - Jen</span>
+            <span onclick="setCurrency('CZK')"><strong>CZK</strong> - Korona czeska</span>
+        </div>
+    </div>
+
+    <form id="currencyForm" action="/check-rate" method="post">
+        <div class="form-group">
+            <label for="currency">Kod waluty (3 litery):</label>
+            <input type="text"
+                   id="currency"
+                   name="currency"
+                   placeholder="np. USD, EUR, GBP..."
+                   maxlength="3"
+                   required
+                   style="text-transform: uppercase;"
+                   th:value="${currency}">
+        </div>
+
+        <div class="date-inputs">
+            <div class="form-group">
+                <label for="startDate">Data od:</label>
+                <input type="date"
+                       id="startDate"
+                       name="startDate"
+                       min="2002-01-02"
+                       required
+                       th:value="${startDate}">
+            </div>
+
+            <div class="form-group">
+                <label for="endDate">Data do:</label>
+                <input type="date"
+                       id="endDate"
+                       name="endDate"
+                       required
+                       th:value="${endDate}">
+            </div>
+        </div>
+
+        <button type="submit" class="btn" id="submitBtn">Sprawdź Kurs</button>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <span>Sprawdzam kurs</span>
+        </div>
+    </form>
+
+    <div th:if="${result}" class="result">
+        <h3>Wynik sprawdzenia:</h3>
+        <div class="rate-display" th:text="${result.averageRate} + ' PLN'"></div>
+
+        <div class="result-info">
+            <p><strong> Waluta:</strong> <span th:text="${result.currency}"></span></p>
+            <p><strong> Okres:</strong> <span th:text="${result.startDate}"></span> do <span th:text="${result.endDate}"></span></p>
+            <p><strong> Średni kurs:</strong> <span th:text="${result.averageRate}"></span> PLN za 1 <span th:text="${result.currency}"></span></p>
+            <p><strong> Data sprawdzenia:</strong> <span th:text="${result.queryDate}"></span></p>
+        </div>
+    </div>
+</div>
+
+<script>
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('endDate').max = today;
+
+    if (!document.getElementById('startDate').value) {
+        const lastMonth = new Date();
+        lastMonth.setMonth(lastMonth.getMonth() - 1);
+        document.getElementById('startDate').value = lastMonth.toISOString().split('T')[0];
+    }
+
+    if (!document.getElementById('endDate').value) {
+        document.getElementById('endDate').value = today;
+    }
+
+    function setCurrency(currencyCode) {
+        document.getElementById('currency').value = currencyCode;
+        document.getElementById('currency').focus();
+    }
+
+    document.getElementById('currency').addEventListener('input', function(e) {
+        e.target.value = e.target.value.toUpperCase();
+    });
+
+    document.getElementById('startDate').addEventListener('change', function() {
+        const startDate = this.value;
+        const endDateInput = document.getElementById('endDate');
+        endDateInput.min = startDate;
+
+        if (endDateInput.value && endDateInput.value < startDate) {
+            endDateInput.value = startDate;
+        }
+    });
+
+    document.getElementById('currencyForm').addEventListener('submit', function() {
+        const submitBtn = document.getElementById('submitBtn');
+        const loading = document.getElementById('loading');
+
+        submitBtn.style.display = 'none';
+        loading.classList.add('show');
+    });
+
+    document.getElementById('currency').addEventListener('input', function(e) {
+        const value = e.target.value;
+        if (value.length === 3) {
+            e.target.style.borderColor = '#28a745';
+        } else {
+            e.target.style.borderColor = '#e1e8ed';
+        }
+    });
+</script>
+</body>
+</html>
